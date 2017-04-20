@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">MTY</string>
+    <string name="title_home">Home</string>
+    <string name="title_history">История</string>
+    <string name="title_favorites">Избранное</string>
+    <string name="title_activity_favorites">Избранное</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="frag_main_text">Fragment main</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
