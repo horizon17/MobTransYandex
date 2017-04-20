@@ -1,6 +1,5 @@
 package com.example.admin3.mobtransyandex;
 
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -17,20 +16,14 @@ import android.widget.TextView;
 
 import java.util.List;
 
-/**
- * Created by Admin3 on 12.04.2017.
- */
-
 public class HistoryActivity extends AppCompatActivity {
 
     private ListView mlistView;
     private DBHelper dbHelper;
 
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) throws RuntimeException{
         super.onCreate(savedInstanceState);
-        Log.v("Hist onCreate");
         setContentView(R.layout.activity_history);
         try {
 
@@ -53,7 +46,6 @@ public class HistoryActivity extends AppCompatActivity {
 
         FillHistoryListView();
 
-        Log.v("Hist onStart");
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setSelectedItemId(R.id.navigation_history);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
@@ -62,13 +54,11 @@ public class HistoryActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        Log.v("Hist onStop");
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        Log.v("Hist onDestroy");
     }
 
     public void FillHistoryListView() throws RuntimeException{
@@ -90,7 +80,7 @@ public class HistoryActivity extends AppCompatActivity {
                     View view = super.getView(position, convertView, parent);
 
                     TextView idView = (TextView) view.findViewById(R.id.id);
-                    final long id = Long.valueOf(idView.getText().toString()).longValue();
+                    final long id = Long.valueOf(idView.getText().toString());
                     final DataItem dataItem = DBUtil.getDataItem(dbHelper,id);
 
                     CheckBox checkBox = (CheckBox) view.findViewById(R.id.checkBox);
@@ -121,16 +111,13 @@ public class HistoryActivity extends AppCompatActivity {
         public boolean onNavigationItemSelected(@NonNull MenuItem item) {
             switch (item.getItemId()) {
                 case R.id.navigation_home:
-                    Log.v("Hist R.id.navigation_home");
                     Intent intent = new Intent(HistoryActivity.this, MainActivity.class);
                     startActivity(intent);
                     overridePendingTransition(R.anim.slide_right_in, R.anim.slide_right_out);
                     return true;
                 case R.id.navigation_history:
-                    Log.v("Hist R.id.navigation_history");
                     return true;
                 case R.id.navigation_favorites:
-                    Log.v("Hist R.id.navigation_favorites");
                     Intent intent1 = new Intent(HistoryActivity.this, FavoritesActivity.class);
                     startActivity(intent1);
                     overridePendingTransition(R.anim.slide_left_in, R.anim.slide_left_out);
