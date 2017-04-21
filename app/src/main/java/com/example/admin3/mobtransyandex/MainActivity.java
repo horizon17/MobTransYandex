@@ -171,8 +171,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         });
 
+        // кнопка менять языки местами
         ImageButton imageButton = (ImageButton) findViewById(R.id.imgButtonRok);
-
         imageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -208,12 +208,13 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
             @Override
             public void afterTextChanged(Editable s) {
+                // Перевод сразу при вводе текста
                 getTranslation(s.toString());
 
             }
         });
 
-        // Нажатие кнопки Готово однозначно указывает на необходимость сохранить перевод
+        // Нажатие на клавиатуре кнопки Готово однозначно указывает на необходимость сохранить перевод
         mEditText.setOnEditorActionListener(new EditText.OnEditorActionListener() {
 
             public boolean onEditorAction(TextView v, int actionId,
@@ -229,6 +230,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         queue = Volley.newRequestQueue(this);
         dbHelper = new DBHelper(this,"MyStore.db",null,Constants.DB_VERSION);
 
+        // Получить возможные языки для перевода
         getTransDirect();
 
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
@@ -320,6 +322,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         final String url = Constants.Yandex_URL + Constants.Yandex_api + Constants.Yandex_key + "&text=" +query+ "&lang="+dirs;
 
+        // удобный механизм асинхронных запросов из Volley
         StringRequest request = new StringRequest(Request.Method.POST,
                 url,
                 new Response.Listener<String>() {
