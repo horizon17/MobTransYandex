@@ -299,6 +299,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     }
 
     private void getTranslation(final String in){
+        
+        set_mTextMessage("");
 
         if (in==null || in.isEmpty()){
             return;
