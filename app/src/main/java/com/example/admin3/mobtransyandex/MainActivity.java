@@ -29,8 +29,6 @@ import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import java.util.Collections;
@@ -46,7 +44,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
     private EditText mEditText;
     private Spinner spinnerFrom;
     private Spinner spinnerTo;
-    private TransModel model;
     private LangsModel langsModel;
     private DBHelper dbHelper;
     private HashMap<String,String> LangMap;                 // "ru","Русский"
@@ -61,6 +58,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
     private ImageView imageView_fav;
 
+    Translator translator;
+
     @Override
     public boolean onTouch(View v, MotionEvent event) {   // пользователь скорее всего закончил вводить слово - сохраним в Истории.
         if(dataItem.getInput() != null && !dataItem.getInput().isEmpty() || dataItem.getOutput() != null && !dataItem.getOutput().isEmpty()){
@@ -68,32 +67,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
         return true;
     }
-
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
-            = new BottomNavigationView.OnNavigationItemSelectedListener() {
-
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.navigation_home:
-                    return true;
-                case R.id.navigation_history:
-                    SaveHistory(dataItem); // 200% что запишем )
-                    Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
-                    startActivity(intent);
-                    overridePendingTransition(R.anim.slide_left_in, R.anim.slide_left_out);
-                    return true;
-                case R.id.navigation_favorites:
-                    SaveHistory(dataItem);
-                    Intent intent1 = new Intent(MainActivity.this, FavoritesActivity.class);
-                    startActivity(intent1);
-                    overridePendingTransition(R.anim.slide_left_in, R.anim.slide_left_out);
-                    return true;
-            }
-            return false;
-        }
-
-    };
 
 
     @Override
@@ -109,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         long ID = savedInstanceState.getLong("ID");
         if (ID!=0) {
             dataItem = DBUtil.getDataItem(dbHelper, ID);
+            setImageView_fav();
         }
     }
 
@@ -118,6 +92,8 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
         Log.v("main onCreate");
         setContentView(R.layout.activity_main);
+
+        translator=new Translator(this);
 
         dataItem = new DataItem();
         LangMap         =new HashMap<>();
@@ -138,7 +114,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 define_dirs();
-                getTranslation(mEditText.getText().toString());
+                set_mTextMessage("");
+                update_dateItem(mEditText.getText().toString());
+                translator.getTranslation(dataItem,new  Translator.VolleyCallback() {
+                    @Override
+                    public void onSuccess(String result) {
+                        set_mTextMessage(result);
+                    }
+                });
             }
 
             @Override
@@ -151,7 +134,14 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 define_dirs();
-                getTranslation(mEditText.getText().toString());
+                set_mTextMessage("");
+                update_dateItem(mEditText.getText().toString());
+                translator.getTranslation(dataItem,new  Translator.VolleyCallback() {
+                    @Override
+                    public void onSuccess(String result) {
+                        set_mTextMessage(result);
+                    }
+                });
             }
 
             @Override
@@ -171,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
             }
         });
 
-        // кнопка менять языки местами
+        // поменять языки местами
         ImageButton imageButton = (ImageButton) findViewById(R.id.imgButtonRok);
         imageButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -208,13 +198,19 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
 
             @Override
             public void afterTextChanged(Editable s) {
-                // Перевод сразу при вводе текста
-                getTranslation(s.toString());
+                set_mTextMessage("");
+                update_dateItem(s.toString());
+                translator.getTranslation(dataItem,new  Translator.VolleyCallback() {
+                    @Override
+                    public void onSuccess(String result) {
+                        set_mTextMessage(result);
+                    }
+                });
 
             }
         });
 
-        // Нажатие на клавиатуре кнопки Готово однозначно указывает на необходимость сохранить перевод
+        // Нажатие кнопки Готово однозначно указывает на необходимость сохранить перевод
         mEditText.setOnEditorActionListener(new EditText.OnEditorActionListener() {
 
             public boolean onEditorAction(TextView v, int actionId,
@@ -268,6 +264,15 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         return true;
     }
 
+    private void update_dateItem(String in){
+        if (!in.equals(dataItem.getInput())) {
+            dataItem = new DataItem(in, dirs);
+            setImageView_fav();
+        }
+        dataItem.setInput(in);
+        dataItem.setDirs(dirs);
+    }
+
     private void setImageView_fav(){
         if (dataItem.getFav()==1){
             imageView_fav.setImageResource(R.drawable.fav1);
@@ -298,65 +303,6 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         }
     }
 
-    private void getTranslation(final String in){
-        
-        set_mTextMessage("");
-
-        if (in==null || in.isEmpty()){
-            return;
-        }
-        if (dirs==null){
-            if (!define_dirs()){
-                return;
-            }
-        }
-
-        if (!in.equals(dataItem.getInput())) {
-            dataItem = new DataItem(in, dirs);
-        }
-
-        String query;
-        try {
-            query=URLEncoder.encode(in,"utf-8");
-        } catch (UnsupportedEncodingException e){
-            query="";
-        }
-
-        final String url = Constants.Yandex_URL + Constants.Yandex_api + Constants.Yandex_key + "&text=" +query+ "&lang="+dirs;
-
-        // удобный механизм асинхронных запросов из Volley
-        StringRequest request = new StringRequest(Request.Method.POST,
-                url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String s) {
-
-                        try {
-
-                            Gson gson = new Gson();
-                            model = gson.fromJson(s, TransModel.class);
-
-                            if (model != null) {
-
-                                dataItem.setOutput(model.getText());
-                                set_mTextMessage(dataItem.getOutput());
-
-                            }
-                        } catch (JsonSyntaxException ex) {
-                            Log.v("getMessage "+ex.getMessage());
-                        }
-
-                    }
-                }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError volleyError) {
-                Log.v("onErrorResponse url "+url+" "+volleyError.getMessage());
-            }
-        });
-
-        queue.add(request); // добавляем запрос на перевод в очередь на асинхронное выполнение
-
-    }
 
     private void getTransDirect(){
 
@@ -427,5 +373,30 @@ public class MainActivity extends AppCompatActivity implements View.OnTouchListe
         mTextMessage.setText(text);
     }
 
+    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+            = new BottomNavigationView.OnNavigationItemSelectedListener() {
+
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            switch (item.getItemId()) {
+                case R.id.navigation_home:
+                    return true;
+                case R.id.navigation_history:
+                    SaveHistory(dataItem); // 200% что запишем )
+                    Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
+                    startActivity(intent);
+                    overridePendingTransition(R.anim.slide_left_in, R.anim.slide_left_out);
+                    return true;
+                case R.id.navigation_favorites:
+                    SaveHistory(dataItem);
+                    Intent intent1 = new Intent(MainActivity.this, FavoritesActivity.class);
+                    startActivity(intent1);
+                    overridePendingTransition(R.anim.slide_left_in, R.anim.slide_left_out);
+                    return true;
+            }
+            return false;
+        }
+
+    };
 
 }
