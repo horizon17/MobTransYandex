@@ -22,9 +22,9 @@ public class ExampleUnitTest extends AppCompatActivity {
 //        dataItem.setDirs("en-ru");
         // следующая строка вызывает ошибку android.util.Log.isLoggable(Ljava/lang/String;I)Z
         // причина которой в том что volley не подходит для JUnit test,
-        // поскольку: isLoggable is a native method so its not available at runtime.
+        // поскольку: "isLoggable is a native method so its not available at runtime."
         // Здень нужен RobolectricTestRunner, на который, к сожалению не хватило времени.
-        /*translator.getTranslation1(dataItem,new Translator.VolleyCallback1() {
+        /*translator.getTranslation(dataItem,new Translator.VolleyCallback() {
             @Override
             public void onSuccess(String result) {
                 Log.v("ExampleUnitTest result: "+result);
